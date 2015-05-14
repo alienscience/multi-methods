@@ -15,13 +15,16 @@ struct ArgList<T, Ts...> : public ArgList<Ts...>
 
 // Create a base class the implements the interface
 
-template <typename... Ts> struct Builder : public ArgList<Ts...> {};
+template <typename... TArgs, typename... Ts>
+struct Builder : public ArgList<TArgs...> {};
 
 template <typename T, typename... Ts>
 struct Builder<T, Ts...> : public Builder<Ts...>
 {
     virtual ArgList<Ts...>* addArg(T& v);
 };
+
+// Create a class that sets up the builder
 
 // First argument
 
