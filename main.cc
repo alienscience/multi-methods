@@ -5,7 +5,7 @@
 
 struct DumpArgs {
 
-    // Multimethod definition
+    // multimethod definition
     template <typename T0, typename T1, typename T2>
     void apply(T0& arg0, T1& arg1, T2& arg2) {
         std::cout << arg0 << " "
@@ -16,7 +16,8 @@ struct DumpArgs {
 
 int main()
 {
-    multi::Method<DumpArgs,int,double> method;
+    multi::Builder<int,double>::ArgStart<int,double> argstart;
+    //multi::Method<DumpArgs,int,double> method;
     //multi::Builder<int,double> builder;
 #if 0
     multi::Builder<DumpArgs> builder;

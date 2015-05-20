@@ -3,51 +3,54 @@
 
 namespace multi {
 
-// Create an interface based on the given parameter pack
-
-template <typename... Ts> struct ArgList {};
-
-template <typename T, typename... Ts>
-struct ArgList<T, Ts...> : public ArgList<Ts...>
+// Builder is a container template that holds all the possible types
+// of multimethod arguments
+template <typename... TArgs>
+struct Builder
 {
-    virtual ArgList* addArg(T& v) = 0;
+    // Create an interface based on the given parameter pack
+    template <typename... Ts> struct ArgList {};
+
+    template <typename T, typename... Ts>
+    struct ArgList<T, Ts...> : public ArgList<Ts...>
+    {
+        virtual ArgList<TArgs...>* addArg(T& v) = 0;
+    };
+
+    // An empty ArgList
+    template <typename... Ts> struct ArgStart : public ArgList<TArgs...> {};
+
+    template <typename T, typename... Ts>
+    struct ArgStart<T, Ts...> : public ArgStart<Ts...>
+    {
+        virtual ArgList<TArgs...>* addArg(T& v);
+    };
+
+    // A one argument ArgList
+    template <typename T0, typename... Ts>
+    struct Arg0 : public ArgList<TArgs...>
+    {
+        T0& arg0_;
+        Arg0(T0& v) : arg0_(v) {}
+    };
+
+    template <typename T0, typename T, typename... Ts>
+    struct Arg0<T0, T, Ts...> : public Arg0<T0,Ts...>
+    {
+        virtual ArgList<TArgs...>* addArg(T& v) { return this; }
+    };
+
 };
 
-// Create a base class the implements the interface
-
-template <typename... TArgs, typename... Ts>
-struct Builder : public ArgList<TArgs...> {};
-
-template <typename T, typename... Ts>
-struct Builder<T, Ts...> : public Builder<Ts...>
-{
-    virtual ArgList<Ts...>* addArg(T& v);
-};
-
-// Create a class that sets up the builder
-
-// First argument
-
-template <typename T0, typename... Ts> struct Arg0 : public Builder<Ts...>
-{
-protected:
-    T0& arg0_;
-public:
-    Arg0(T0& v) : arg0_(v) {}
-};
-
-template <typename T0, typename T, typename... Ts>
-struct Arg0<T0, T, Ts...> : public Arg0<T0, Ts...> {
-public:
-    virtual ArgList<Ts...>* addArg(T& v) { return this; }
-};
 
 //----- Template method implementations ----------------------------------------
 
+template <typename... TArgs>
 template <typename T, typename... Ts>
-ArgList<Ts...>* Builder<T, Ts...>::addArg(T& v)
+Builder<TArgs...>::ArgList<TArgs...>*
+Builder<TArgs...>::ArgStart<T, Ts...>::addArg(T& v)
 {
-    return new Arg0<T, Ts...>(v);
+    return new Arg0<T,TArgs...>(v);
 }
 
 } // namespace multi
