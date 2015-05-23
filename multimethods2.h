@@ -11,9 +11,17 @@ struct Builder
     // Create an interface based on the given parameter pack
     template <typename... Ts> struct ArgList {};
 
+    template <typename T>
+    struct ArgList<T>
+    {
+        virtual ArgList<TArgs...>* addArg(T& v) = 0;
+    };
+
     template <typename T, typename... Ts>
     struct ArgList<T, Ts...> : public ArgList<Ts...>
     {
+        // Premote functions from the base classes
+        using ArgList<Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v) = 0;
     };
 
@@ -24,6 +32,7 @@ struct Builder
     template <typename T, typename... Ts>
     struct ArgStart<T, Ts...> : public ArgStart<Ts...>
     {
+        using ArgStart<Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v);
     };
 
