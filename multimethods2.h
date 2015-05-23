@@ -37,6 +37,7 @@ struct Builder
     template <typename T0, typename T, typename... Ts>
     struct Arg0<T0, T, Ts...> : public Arg0<T0,Ts...>
     {
+        Arg0<T0,T,Ts...>(T0& v) : Arg0<T0,Ts...>(v) {}
         virtual ArgList<TArgs...>* addArg(T& v) { return this; }
     };
 
