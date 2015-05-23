@@ -117,6 +117,14 @@ Builder<TArgs...>::Arg1<T0,T1,T,Ts...>::addArg(T& v)
     return new Arg2<T0,T1,T,TArgs...>(Arg0<T0>::arg0_,Arg1<T0,T1>::arg1_,v);
 }
 
+//----- Create a multimethod ---------------------------------------------------
+
+template <typename TImpl, typename... TArgs>
+typename Builder<TArgs...>::template ArgList<TArgs...>* method(TImpl& impl)
+{
+    return new Builder<TArgs...>::ArgStart<TArgs...>();
+}
+
 } // namespace multi
 #endif // MULITMETHODS2_H
 

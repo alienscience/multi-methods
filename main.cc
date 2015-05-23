@@ -16,18 +16,19 @@ struct DumpArgs {
 
 int main()
 {
-    multi::Builder<int,double>::ArgStart<int,double> builder;
+    DumpArgs myFunc;
+    auto method = multi::method<int,double>(myFunc);
     //multi::Method<DumpArgs,int,double> method;
     //multi::Builder<int,double> builder;
     //multi::Builder<DumpArgs> builder;
     int arg1 = 1;
     double arg2 = 2.1;
     int arg3 = 3;
-    auto args = builder.addArg(arg1);
+    method = method->addArg(arg1);
     //args->apply();
-    args = args->addArg(arg2);
+    method = method->addArg(arg2);
     //args->apply();
-    args = args->addArg(arg3);
+    method = method->addArg(arg3);
     //args->apply();
     return 0;
 }
