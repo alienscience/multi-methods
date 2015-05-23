@@ -119,10 +119,10 @@ Builder<TArgs...>::Arg1<T0,T1,T,Ts...>::addArg(T& v)
 
 //----- Create a multimethod ---------------------------------------------------
 
-template <typename TImpl, typename... TArgs>
+template <typename... TArgs, typename TImpl>
 typename Builder<TArgs...>::template ArgList<TArgs...>* method(TImpl& impl)
 {
-    return new Builder<TArgs...>::ArgStart<TArgs...>();
+    return new typename Builder<TArgs...>::template ArgStart<TArgs...>();
 }
 
 } // namespace multi
