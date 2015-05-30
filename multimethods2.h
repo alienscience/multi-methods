@@ -177,10 +177,30 @@ Builder<TArgs...>::Arg1<k,TImpl,T0,T1,T,Ts...>::addArg(T& v)
 
 //----- Create a multimethod ---------------------------------------------------
 
+struct Base
+{
+    template <typename T0>
+    void apply(T0& arg0) {}
+
+    template <typename T0, typename T1>
+    void apply(T0& arg0, T1& arg1) {}
+
+    template <typename T0, typename T1, typename T2>
+    void apply(T0& arg0, T1& arg1, T2& arg2) {}
+
+};
+
+template <typename TImpl>
+struct Mixin : public TImpl, public Base
+{
+    using TImpl::apply; // Highest precedence
+    using Base::apply;
+};
+
 template <size_t k, typename... TArgs, typename TImpl>
 typename Builder<TArgs...>::template ArgList<TArgs...>* method(TImpl& impl)
 {
-    return new typename Builder<TArgs...>::template ArgStart<k,TImpl,TArgs...>();
+    return new typename Builder<TArgs...>::template ArgStart<k,Mixin<TImpl>,TArgs...>();
 }
 
 } // namespace multi
