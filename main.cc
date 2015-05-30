@@ -16,18 +16,14 @@ struct DumpArgs {
 
 int main()
 {
-    DumpArgs myFunc;
-    auto method = multi::method<int,double>(myFunc);
-    //multi::Method<DumpArgs,int,double> method;
-    //multi::Builder<int,double> builder;
-    //multi::Builder<DumpArgs> builder;
+    auto method = multi::method<DumpArgs,int,double>();
     int arg1 = 1;
     double arg2 = 2.1;
     int arg3 = 3;
-    method = method->addArg(arg1);
-    method = method->addArg(arg2);
-    method = method->addArg(arg3);
-    method->apply();
+    method.addArg(arg1);
+    method.addArg(arg2);
+    method.addArg(arg3);
+    method.apply();
     return 0;
 }
 

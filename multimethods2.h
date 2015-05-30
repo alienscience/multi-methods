@@ -1,6 +1,8 @@
 #ifndef MULITMETHODS2_H
 #define MULITMETHODS2_H
 
+#include <memory>
+
 namespace multi {
 
 // Builder is a container template that holds all the possible types
@@ -111,6 +113,27 @@ struct Builder
         }
     };
 
+    //------------------------------------------------------------------------------
+
+    struct Args
+    {
+        Args(ArgList<TArgs...>* args) : args_(args) {}
+
+        template <typename T>
+        void addArg(T& v)
+        {
+            // The real type of args_ changes each time an argument is added
+            args_ =  std::unique_ptr<ArgList<TArgs...>>(args_->addArg(v));
+        }
+
+        void apply()
+        {
+            args_->apply();
+        }
+    private:
+        std::unique_ptr<ArgList<TArgs...>> args_;
+    };
+
     //-------------------------------------------------------------------------
 
     // Attempt at using a single template for all arities
@@ -175,7 +198,7 @@ Builder<TArgs...>::Arg1<TImpl,T0,T1,T,Ts...>::addArg(T& v)
                                               Arg1<TImpl,T0,T1>::arg1_,v);
 }
 
-//----- Create a multimethod ---------------------------------------------------
+//----- Decorate the implementation with unimplemented arities -----------------
 
 struct Base
 {
@@ -197,10 +220,13 @@ struct Mixin : public TImpl, public Base
     using Base::apply;
 };
 
-template <typename... TArgs, typename TImpl>
-typename Builder<TArgs...>::template ArgList<TArgs...>* method(TImpl& impl)
+//----- Create a multimethod ---------------------------------------------------
+
+template <typename TImpl, typename... TArgs>
+typename Builder<TArgs...>::Args method()
 {
-    return new typename Builder<TArgs...>::template ArgStart<Mixin<TImpl>,TArgs...>();
+    auto emptyArgs = new typename Builder<TArgs...>::template ArgStart<Mixin<TImpl>,TArgs...>();
+    return typename Builder<TArgs...>::Args(emptyArgs);
 }
 
 } // namespace multi
