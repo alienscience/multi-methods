@@ -5,5 +5,5 @@ set(HDR_LIST multimethods.h multimethods2.h)
 set(SRC_LIST main.cc)
 
 add_executable(${PROJECT_NAME} ${HDR_LIST} ${SRC_LIST})
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall  -Weffc++ -pedantic")
 

@@ -18,6 +18,7 @@ struct Builder
     template <typename T>
     struct ArgList<T>
     {
+        virtual ~ArgList() {}
         virtual ArgList<TArgs...>* addArg(T& v) = 0;
     };
 
@@ -202,6 +203,8 @@ Builder<TArgs...>::Arg1<TImpl,T0,T1,T,Ts...>::addArg(T& v)
 
 struct Base
 {
+    virtual ~Base() {}
+
     template <typename T0>
     void apply(T0& arg0) {}
 
@@ -216,6 +219,7 @@ struct Base
 template <typename TImpl>
 struct Mixin : public TImpl, public Base
 {
+    virtual ~Mixin() {}
     using TImpl::apply; // Highest precedence
     using Base::apply;
 };
