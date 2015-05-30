@@ -155,9 +155,12 @@ struct Builder
 
     //------------------------------------------------------------------------------
 
+    template <typename TState>
     struct Args
     {
-        Args(ArgList<TArgs...>* args) : args_(args) {}
+        Args(TState& state, ArgList<TArgs...>* args) :
+            state_(state),
+            args_(args) {}
 
         template <typename T>
         void addArg(const T& v)
@@ -169,8 +172,11 @@ struct Builder
         void apply()
         {
             args_->apply();
+            // TODO: clean this up - it should be a static_cast
+            state_ = TState(dynamic_cast<TState&>(*args_));
         }
     private:
+        TState& state_;
         std::unique_ptr<ArgList<TArgs...>> args_;
     };
 
@@ -233,11 +239,11 @@ struct Mixin : public TImpl, public Base
 //----- Create a multimethod ---------------------------------------------------
 
 template <typename... TArgs, typename TImpl>
-typename Builder<Mixin<TImpl>,TArgs...>::Args method(TImpl& impl)
+typename Builder<Mixin<TImpl>,TArgs...>::template Args<TImpl> method(TImpl& impl)
 {
     Mixin<TImpl> wrappedImpl(impl);
     auto* emptyArgs = new typename Builder<Mixin<TImpl>,TArgs...>::template ArgStart<TArgs...>(wrappedImpl);
-    return typename Builder<Mixin<TImpl>,TArgs...>::Args(emptyArgs);
+    return typename Builder<Mixin<TImpl>,TArgs...>::template Args<TImpl>(impl,emptyArgs);
 }
 
 } // namespace multi

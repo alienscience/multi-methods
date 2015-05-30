@@ -6,7 +6,8 @@
 
 struct DumpArgs {
 
-    // Remove warnings about non-virtual destructor
+    int result;
+    DumpArgs() : result(-1) {}
     virtual ~DumpArgs() {}
 
     // Multimethod definition
@@ -15,6 +16,7 @@ struct DumpArgs {
         std::cout << arg0 << " "
                   << arg1 << " "
                   << arg2 << std::endl;
+        result = arg0 + arg1 + arg2;
     }
 };
 
@@ -46,9 +48,10 @@ int main()
     }
 
     // Call the appropriate version of DumpArgs::apply()
-    // Results can be extracted from DumpArgs
     method.apply();
 
+    // Results can be extracted from DumpArgs
+    std::cout << "Integer summation " << dumpArgs.result << std::endl;
 
     return 0;
 }
