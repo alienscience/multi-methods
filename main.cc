@@ -17,7 +17,7 @@ struct DumpArgs {
 int main()
 {
     DumpArgs myFunc;
-    auto method = multi::method<3,int,double>(myFunc);
+    auto method = multi::method<int,double>(myFunc);
     //multi::Method<DumpArgs,int,double> method;
     //multi::Builder<int,double> builder;
     //multi::Builder<DumpArgs> builder;

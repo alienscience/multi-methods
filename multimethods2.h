@@ -30,84 +30,84 @@ struct Builder
 
     //-------------------------------------------------------------------------
 
-    template <size_t k, typename TImpl,typename... Ts> struct ArgStart :
+    template <typename TImpl,typename... Ts> struct ArgStart :
             public ArgList<TArgs...>,
             public TImpl
     {
     };
 
-    template <size_t k, typename TImpl, typename T, typename... Ts>
-    struct ArgStart<k, TImpl, T, Ts...> : public ArgStart<k,TImpl,Ts...>
+    template <typename TImpl, typename T, typename... Ts>
+    struct ArgStart<TImpl, T, Ts...> : public ArgStart<TImpl,Ts...>
     {
-        using ArgStart<k,TImpl,Ts...>::addArg;
+        using ArgStart<TImpl,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v);
         virtual void apply(){}
     };
 
     //-------------------------------------------------------------------------
 
-    template <size_t k, typename TImpl, typename T0, typename... Ts>
+    template <typename TImpl, typename T0, typename... Ts>
     struct Arg0 : public ArgList<TArgs...>
     {
         T0& arg0_;
         Arg0(T0& v) : arg0_(v) {}
     };
 
-    template <size_t k, typename TImpl, typename T0, typename T, typename... Ts>
-    struct Arg0<k, TImpl, T0, T, Ts...> : public Arg0<k,TImpl,T0,Ts...>
+    template <typename TImpl, typename T0, typename T, typename... Ts>
+    struct Arg0<TImpl, T0, T, Ts...> : public Arg0<TImpl,T0,Ts...>
     {
-        Arg0<k,TImpl,T0,T,Ts...>(T0& v) : Arg0<k,TImpl,T0,Ts...>(v) {}
-        using Arg0<k,TImpl,T0,Ts...>::addArg;
+        Arg0<TImpl,T0,T,Ts...>(T0& v) : Arg0<TImpl,T0,Ts...>(v) {}
+        using Arg0<TImpl,T0,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v);
         virtual void apply(){}
     };
 
     //-------------------------------------------------------------------------
 
-    template <size_t k, typename TImpl, typename T0, typename T1, typename... Ts>
-    struct Arg1 : public Arg0<k,TImpl,T0,Ts...>
+    template <typename TImpl, typename T0, typename T1, typename... Ts>
+    struct Arg1 : public Arg0<TImpl,T0,Ts...>
     {
         T1& arg1_;
-        Arg1(T0& arg0, T1& v) : Arg0<k,TImpl,T0,Ts...>(arg0), arg1_(v) {}
+        Arg1(T0& arg0, T1& v) : Arg0<TImpl,T0,Ts...>(arg0), arg1_(v) {}
     };
 
-    template <size_t k, typename TImpl, typename T0, typename T1, typename T, typename... Ts>
-    struct Arg1<k,TImpl,T0, T1, T, Ts...> : public Arg1<k,TImpl,T0,T1,Ts...>
+    template <typename TImpl, typename T0, typename T1, typename T, typename... Ts>
+    struct Arg1<TImpl,T0, T1, T, Ts...> : public Arg1<TImpl,T0,T1,Ts...>
     {
-        Arg1<k,TImpl,T0,T1,T,Ts...>(T0& arg0, T1& v) : Arg1<k,TImpl,T0,T1,Ts...>(arg0,v) {}
-        using Arg1<k,TImpl,T0,T1,Ts...>::addArg;
+        Arg1<TImpl,T0,T1,T,Ts...>(T0& arg0, T1& v) : Arg1<TImpl,T0,T1,Ts...>(arg0,v) {}
+        using Arg1<TImpl,T0,T1,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v);
         virtual void apply()
         {
             TImpl impl;
-            impl.apply(Arg0<k,TImpl,T0>::arg0_, Arg1<k,TImpl,T0,T1>::arg1_);
+            impl.apply(Arg0<TImpl,T0>::arg0_, Arg1<TImpl,T0,T1>::arg1_);
         }
     };
 
     //-------------------------------------------------------------------------
 
-    template <size_t k, typename TImpl,typename T0, typename T1, typename T2, typename... Ts>
-    struct Arg2 : public Arg1<k,TImpl,T0,T1,Ts...>
+    template <typename TImpl,typename T0, typename T1, typename T2, typename... Ts>
+    struct Arg2 : public Arg1<TImpl,T0,T1,Ts...>
     {
         T2& arg2_;
         Arg2(T0& arg0, T1& arg1, T2& v) :
-            Arg1<k,TImpl,T0,T1,Ts...>(arg0, arg1),
+            Arg1<TImpl,T0,T1,Ts...>(arg0, arg1),
             arg2_(v) {}
     };
 
-    template <size_t k, typename TImpl,typename T0, typename T1, typename T2, typename T, typename... Ts>
-    struct Arg2<k,TImpl,T0, T1, T2, T, Ts...> : public Arg2<k,TImpl,T0,T1,T2,Ts...>
+    template <typename TImpl,typename T0, typename T1, typename T2, typename T, typename... Ts>
+    struct Arg2<TImpl,T0, T1, T2, T, Ts...> : public Arg2<TImpl,T0,T1,T2,Ts...>
     {
-        Arg2<k,TImpl,T0,T1,T2,T,Ts...>(T0& arg0, T1& arg1, T2& v) :
-            Arg2<k,TImpl,T0,T1,T2,Ts...>(arg0,arg1,v) {}
-        using Arg2<k,TImpl,T0,T1,T2,Ts...>::addArg;
+        Arg2<TImpl,T0,T1,T2,T,Ts...>(T0& arg0, T1& arg1, T2& v) :
+            Arg2<TImpl,T0,T1,T2,Ts...>(arg0,arg1,v) {}
+        using Arg2<TImpl,T0,T1,T2,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v) { return this; }
         virtual void apply()
         {
             TImpl impl;
-            impl.apply(Arg0<k,TImpl,T0>::arg0_,
-                       Arg1<k,TImpl,T0,T1>::arg1_,
-                       Arg2<k,TImpl,T0,T1,T2>::arg2_);
+            impl.apply(Arg0<TImpl,T0>::arg0_,
+                       Arg1<TImpl,T0,T1>::arg1_,
+                       Arg2<TImpl,T0,T1,T2>::arg2_);
         }
     };
 
@@ -151,28 +151,28 @@ struct Builder
 //----- Template method implementations ----------------------------------------
 
 template <typename... TArgs>
-template <size_t k, typename TImpl, typename T, typename... Ts>
+template <typename TImpl, typename T, typename... Ts>
 Builder<TArgs...>::ArgList<TArgs...>*
-Builder<TArgs...>::ArgStart<k,TImpl,T,Ts...>::addArg(T& v)
+Builder<TArgs...>::ArgStart<TImpl,T,Ts...>::addArg(T& v)
 {
-    return new Arg0<k,TImpl,T,TArgs...>(v);
+    return new Arg0<TImpl,T,TArgs...>(v);
 }
 
 template <typename... TArgs>
-template <size_t k, typename TImpl, typename T0, typename T, typename... Ts>
+template <typename TImpl, typename T0, typename T, typename... Ts>
 Builder<TArgs...>::ArgList<TArgs...>*
-Builder<TArgs...>::Arg0<k,TImpl,T0,T,Ts...>::addArg(T& v)
+Builder<TArgs...>::Arg0<TImpl,T0,T,Ts...>::addArg(T& v)
 {
-    return new Arg1<k,TImpl,T0,T,TArgs...>(Arg0<k,TImpl,T0>::arg0_,v);
+    return new Arg1<TImpl,T0,T,TArgs...>(Arg0<TImpl,T0>::arg0_,v);
 }
 
 template <typename... TArgs>
-template <size_t k, typename TImpl, typename T0, typename T1, typename T, typename... Ts>
+template <typename TImpl, typename T0, typename T1, typename T, typename... Ts>
 Builder<TArgs...>::ArgList<TArgs...>*
-Builder<TArgs...>::Arg1<k,TImpl,T0,T1,T,Ts...>::addArg(T& v)
+Builder<TArgs...>::Arg1<TImpl,T0,T1,T,Ts...>::addArg(T& v)
 {
-    return new Arg2<k,TImpl,T0,T1,T,TArgs...>(Arg0<k,TImpl,T0>::arg0_,
-                                              Arg1<k,TImpl,T0,T1>::arg1_,v);
+    return new Arg2<TImpl,T0,T1,T,TArgs...>(Arg0<TImpl,T0>::arg0_,
+                                              Arg1<TImpl,T0,T1>::arg1_,v);
 }
 
 //----- Create a multimethod ---------------------------------------------------
@@ -197,10 +197,10 @@ struct Mixin : public TImpl, public Base
     using Base::apply;
 };
 
-template <size_t k, typename... TArgs, typename TImpl>
+template <typename... TArgs, typename TImpl>
 typename Builder<TArgs...>::template ArgList<TArgs...>* method(TImpl& impl)
 {
-    return new typename Builder<TArgs...>::template ArgStart<k,Mixin<TImpl>,TArgs...>();
+    return new typename Builder<TArgs...>::template ArgStart<Mixin<TImpl>,TArgs...>();
 }
 
 } // namespace multi
