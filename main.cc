@@ -28,7 +28,8 @@ int main()
     std::uniform_int_distribution<int> distribution(0,100);
 
     // Define a multimethod that accepts arguments of int or double
-    auto method = multi::method<DumpArgs,int,double>();
+    DumpArgs dumpArgs;
+    auto method = multi::method<int,double>(dumpArgs);
 
     // Add arguments of types randomly selected at runtime
     int rnd;
@@ -45,7 +46,10 @@ int main()
     }
 
     // Call the appropriate version of DumpArgs::apply()
+    // Results can be extracted from DumpArgs
     method.apply();
+
+
     return 0;
 }
 
