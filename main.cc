@@ -5,9 +5,15 @@
 
 struct DumpArgs {
 
+    template <typename T0>
+    void apply(T0& arg0) {}
+
+    template <typename T0, typename T1>
+    void apply(T0& arg0, T1& arg1) {}
+
     // multimethod definition
     template <typename T0, typename T1, typename T2>
-    void operator()(T0& arg0, T1& arg1, T2& arg2) {
+    void apply(T0& arg0, T1& arg1, T2& arg2) {
         std::cout << arg0 << " "
                   << arg1 << " "
                   << arg2 << std::endl;
@@ -27,7 +33,7 @@ int main()
     method = method->addArg(arg1);
     method = method->addArg(arg2);
     method = method->addArg(arg3);
-    //args->apply();
+    method->apply();
     return 0;
 }
 

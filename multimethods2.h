@@ -11,7 +11,6 @@ struct Builder
     // Create an interface based on the given parameter pack
     template <typename... Ts> struct ArgList
     {
-        virtual void operator()() = 0;
     };
 
     template <typename T>
@@ -26,6 +25,7 @@ struct Builder
         // Premote functions from the base classes
         using ArgList<Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v) = 0;
+        virtual void apply() = 0;
     };
 
     //-------------------------------------------------------------------------
@@ -34,10 +34,6 @@ struct Builder
             public ArgList<TArgs...>,
             public TImpl
     {
-        virtual typename std::enable_if<k==0>::type operator()()
-        {
-            TImpl();
-        }
     };
 
     template <size_t k, typename TImpl, typename T, typename... Ts>
@@ -45,6 +41,7 @@ struct Builder
     {
         using ArgStart<k,TImpl,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v);
+        virtual void apply(){}
     };
 
     //-------------------------------------------------------------------------
@@ -54,10 +51,6 @@ struct Builder
     {
         T0& arg0_;
         Arg0(T0& v) : arg0_(v) {}
-        virtual typename std::enable_if<k==1>::type operator()()
-        {
-            TImpl(arg0_);
-        }
     };
 
     template <size_t k, typename TImpl, typename T0, typename T, typename... Ts>
@@ -66,6 +59,7 @@ struct Builder
         Arg0<k,TImpl,T0,T,Ts...>(T0& v) : Arg0<k,TImpl,T0,Ts...>(v) {}
         using Arg0<k,TImpl,T0,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v);
+        virtual void apply(){}
     };
 
     //-------------------------------------------------------------------------
@@ -75,10 +69,6 @@ struct Builder
     {
         T1& arg1_;
         Arg1(T0& arg0, T1& v) : Arg0<k,TImpl,T0,Ts...>(arg0), arg1_(v) {}
-        virtual typename std::enable_if<k==2>::type operator()()
-        {
-            TImpl(Arg0<k,TImpl,T0>::arg0_,arg1_);
-        }
     };
 
     template <size_t k, typename TImpl, typename T0, typename T1, typename T, typename... Ts>
@@ -87,6 +77,11 @@ struct Builder
         Arg1<k,TImpl,T0,T1,T,Ts...>(T0& arg0, T1& v) : Arg1<k,TImpl,T0,T1,Ts...>(arg0,v) {}
         using Arg1<k,TImpl,T0,T1,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v);
+        virtual void apply()
+        {
+            TImpl impl;
+            impl.apply(Arg0<k,TImpl,T0>::arg0_, Arg1<k,TImpl,T0,T1>::arg1_);
+        }
     };
 
     //-------------------------------------------------------------------------
@@ -98,12 +93,6 @@ struct Builder
         Arg2(T0& arg0, T1& arg1, T2& v) :
             Arg1<k,TImpl,T0,T1,Ts...>(arg0, arg1),
             arg2_(v) {}
-        virtual std::enable_if<k==3,void> operator()()
-        {
-            TImpl(Arg0<k,TImpl,T0>::arg0_,
-                  Arg1<k,TImpl,T0,T1>::arg1_,
-                  arg2_);
-        }
     };
 
     template <size_t k, typename TImpl,typename T0, typename T1, typename T2, typename T, typename... Ts>
@@ -113,8 +102,49 @@ struct Builder
             Arg2<k,TImpl,T0,T1,T2,Ts...>(arg0,arg1,v) {}
         using Arg2<k,TImpl,T0,T1,T2,Ts...>::addArg;
         virtual ArgList<TArgs...>* addArg(T& v) { return this; }
+        virtual void apply()
+        {
+            TImpl impl;
+            impl.apply(Arg0<k,TImpl,T0>::arg0_,
+                       Arg1<k,TImpl,T0,T1>::arg1_,
+                       Arg2<k,TImpl,T0,T1,T2>::arg2_);
+        }
     };
 
+    //-------------------------------------------------------------------------
+
+    // Attempt at using a single template for all arities
+#if 0
+    template <size_t k, typename TImpl,typename TMem, typename... Ts>
+    struct Arg : public Arg<k-1,TImpl,Ts...>
+    {
+        TMem& arg_;
+        Arg(Arg<k-1,TImpl,Ts...> prev, TMem& v) :
+            Arg<k-1,TImpl,Ts...>(prev),
+            arg_(v) {}
+    };
+
+    template <size_t k, typename TImpl, typename TMem, typename T, typename... Ts>
+    struct Arg<k,TImpl,TMem, T, Ts...> : public Arg<k,TImpl,TMem,Ts...>
+    {
+        Arg<k,TImpl,TMem,T,Ts...>(Arg<k-1,TImpl,Ts...> prev, TMem& v) :
+            Arg<k,TImpl,TMem,Ts...>(prev, v) {}
+        using Arg<k,TImpl,TMem,Ts...>::addArg;
+        virtual ArgList<TArgs...>* addArg(T& v);
+    };
+
+    template <typename TImpl>
+    struct Arg<0,TImpl,> : public ArgList<TArgs...>,  public TImpl
+    {
+    };
+
+    template <typename TImpl, typename T, typename... Ts>
+    struct Arg<0, TImpl, T, Ts...> : public Arg<0,TImpl,Ts...>
+    {
+        using Arg<0,TImpl,Ts...>::addArg;
+        virtual ArgList<TArgs...>* addArg(T& v);
+    };
+#endif
 };
 
 
