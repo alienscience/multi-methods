@@ -1,6 +1,5 @@
 #include <iostream>
-//#include "multimethods.h"
-#include "multimethods2.h"
+#include "multimethods.h"
 
 #include <random>
 #include <chrono>
