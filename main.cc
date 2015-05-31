@@ -39,11 +39,11 @@ int main()
         rnd = distribution(generator);
         if (rnd < 50) {
             // Integer argument
-            method.addArg(rnd);
+            method.visit(rnd);
         } else {
             // Double argument
             double dbl = static_cast<double>(rnd) + 0.01;
-            method.addArg(dbl);
+            method.visit(dbl);
         }
     }
 

@@ -37,7 +37,7 @@ struct PossibleTypes
 {
     //--------------------------------------------------------------------------
 
-    // Visitor interface
+    // Visitor interface - used externally
     // Create an interface based on the given parameter pack
     template <typename... Ts> struct Visitor
     {
@@ -47,15 +47,38 @@ struct PossibleTypes
     struct Visitor<T>
     {
         virtual ~Visitor() {}
-        virtual Visitor<TArgs...>* addArg(const T& v) = 0;
+        virtual void visit(const T& v) = 0;
     };
 
     template <typename T, typename... Ts>
     struct Visitor<T, Ts...> : public Visitor<Ts...>
     {
         // Premote functions from the base classes
-        using Visitor<Ts...>::addArg;
-        virtual Visitor<TArgs...>* addArg(const T& v) = 0;
+        using Visitor<Ts...>::visit;
+        virtual void visit(const T& v) = 0;
+    };
+
+    //--------------------------------------------------------------------------
+
+    // ArgList interface - used internally
+    // Create an interface based on the given parameter pack
+    template <typename... Ts> struct ArgList
+    {
+    };
+
+    template <typename T>
+    struct ArgList<T>
+    {
+        virtual ~ArgList() {}
+        virtual ArgList<TArgs...>* addArg(const T& v) = 0;
+    };
+
+    template <typename T, typename... Ts>
+    struct ArgList<T, Ts...> : public ArgList<Ts...>
+    {
+        // Premote functions from the base classes
+        using ArgList<Ts...>::addArg;
+        virtual ArgList<TArgs...>* addArg(const T& v) = 0;
         virtual void apply() = 0;
     };
 
@@ -70,7 +93,7 @@ struct PossibleTypes
 
         template <typename... Ts>
         struct ArgStart :
-                public Visitor<TArgs...>,
+                public ArgList<TArgs...>,
                 public TImpl
         {
             ArgStart(const TImpl& impl) : TImpl(impl) {}
@@ -82,7 +105,7 @@ struct PossibleTypes
             ArgStart(const TImpl& impl) : ArgStart<Ts...>(impl) {}
 
             using ArgStart<Ts...>::addArg;
-            virtual Visitor<TArgs...>* addArg(const T& v);
+            virtual ArgList<TArgs...>* addArg(const T& v);
             virtual void apply(){}
         };
 
@@ -104,7 +127,7 @@ struct PossibleTypes
                 Arg0<T0,Ts...>(argStart,v) {}
 
             using Arg0<T0,Ts...>::addArg;
-            virtual Visitor<TArgs...>* addArg(const T& v);
+            virtual ArgList<TArgs...>* addArg(const T& v);
             void apply()
             {
                 TImpl::apply(Arg0<T0>::arg0_);
@@ -129,7 +152,7 @@ struct PossibleTypes
                 Arg1<T0,T1,Ts...>(arg0,v) {}
 
             using Arg1<T0,T1,Ts...>::addArg;
-            virtual Visitor<TArgs...>* addArg(const T& v);
+            virtual ArgList<TArgs...>* addArg(const T& v);
             virtual void apply()
             {
                 TImpl::apply(Arg0<T0>::arg0_, Arg1<T0,T1>::arg1_);
@@ -153,7 +176,7 @@ struct PossibleTypes
             Arg2<T0,T1,T2,T,Ts...>(const Arg1<T0,T1>& arg1, const T2& v) :
                 Arg2<T0,T1,T2,Ts...>(arg1,v) {}
             using Arg2<T0,T1,T2,Ts...>::addArg;
-            virtual Visitor<TArgs...>* addArg(const T& v) { return this; }
+            virtual ArgList<TArgs...>* addArg(const T& v) { return this; }
             virtual void apply()
             {
                 TImpl::apply(Arg0<T0>::arg0_,
@@ -166,19 +189,12 @@ struct PossibleTypes
 
     //--------------------------------------------------------------------------
 
-    template <typename TState>
-    struct Args
+    template <typename TState, typename... Ts>
+    struct Args : public Visitor<TArgs...>
     {
-        Args(TState& state, Visitor<TArgs...>* args) :
+        Args(TState& state, ArgList<TArgs...>* args) :
             state_(state),
             args_(args) {}
-
-        template <typename T>
-        void addArg(const T& v)
-        {
-            // The real type of args_ changes each time an argument is added
-            args_ =  std::unique_ptr<Visitor<TArgs...>>(args_->addArg(v));
-        }
 
         void apply()
         {
@@ -186,9 +202,25 @@ struct PossibleTypes
             // TODO: this would be cleaner as a static_cast
             state_ = TState(dynamic_cast<TState&>(*args_));
         }
-    private:
+
+    protected:
         TState& state_;
-        std::unique_ptr<Visitor<TArgs...>> args_;
+        std::unique_ptr<ArgList<TArgs...>> args_;
+    };
+
+    template <typename TState, typename T, typename... Ts>
+    struct Args<TState, T, Ts...> : public Args<TState, Ts...>
+    {
+        Args<TState,T,Ts...>(TState& state, ArgList<TArgs...>* args) :
+            Args<TState,Ts...>(state, args) {}
+
+        using Args<TState,Ts...>::visit;
+        using Args<TState,Ts...>::apply;
+        void visit(const T& v)
+        {
+            Args<TState>::args_ =
+                    std::unique_ptr<ArgList<TArgs...>>(Args<TState>::args_->addArg(v));
+        }
     };
 
 }; // PossibleTypes
@@ -198,7 +230,7 @@ struct PossibleTypes
 template <typename... TArgs>
 template <typename TImpl>
 template <typename T, typename... Ts>
-PossibleTypes<TArgs...>::Visitor<TArgs...>*
+PossibleTypes<TArgs...>::ArgList<TArgs...>*
 PossibleTypes<TArgs...>::Implementation<TImpl>::ArgStart<T,Ts...>::addArg(const T& v)
 {
     return new Arg0<T,TArgs...>(*this,v);
@@ -207,7 +239,7 @@ PossibleTypes<TArgs...>::Implementation<TImpl>::ArgStart<T,Ts...>::addArg(const 
 template <typename... TArgs>
 template <typename TImpl>
 template <typename T0, typename T, typename... Ts>
-PossibleTypes<TArgs...>::Visitor<TArgs...>*
+PossibleTypes<TArgs...>::ArgList<TArgs...>*
 PossibleTypes<TArgs...>::Implementation<TImpl>::Arg0<T0,T,Ts...>::addArg(const T& v)
 {
     return new Arg1<T0,T,TArgs...>(*this,v);
@@ -216,7 +248,7 @@ PossibleTypes<TArgs...>::Implementation<TImpl>::Arg0<T0,T,Ts...>::addArg(const T
 template <typename... TArgs>
 template <typename TImpl>
 template <typename T0, typename T1, typename T, typename... Ts>
-PossibleTypes<TArgs...>::Visitor<TArgs...>*
+PossibleTypes<TArgs...>::ArgList<TArgs...>*
 PossibleTypes<TArgs...>::Implementation<TImpl>::Arg1<T0,T1,T,Ts...>::addArg(const T& v)
 {
     return new Arg2<T0,T1,T,TArgs...>(*this,v);
@@ -250,15 +282,20 @@ struct Mixin : public TImpl, public Base
     using Base::apply;
 };
 
+//----- Convenience typedefs ---------------------------------------------------
+
+template <typename... TArgs>
+using Visitor = typename PossibleTypes<TArgs...>::template Visitor<TArgs...>;
+
 //----- Create a multimethod ---------------------------------------------------
 
 template <typename... TArgs, typename TImpl>
-PossibleTypes<TArgs...>::Args<TImpl> method(TImpl& impl)
+PossibleTypes<TArgs...>::Args<TImpl,TArgs...> method(TImpl& impl)
 {
     Mixin<TImpl> wrappedImpl(impl);
     auto* emptyArgs =  new typename PossibleTypes<TArgs...>::
             template Implementation<Mixin<TImpl>>:: template ArgStart<TArgs...>(wrappedImpl);
-    return typename PossibleTypes<TArgs...>::template Args<TImpl>(impl,emptyArgs);
+    return typename PossibleTypes<TArgs...>::template Args<TImpl,TArgs...>(impl,emptyArgs);
 }
 
 } // namespace multi

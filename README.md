@@ -8,11 +8,12 @@ The implementation here has the following disadvantages:
 * Slow, O(N) virtual function calls and copy constructor calls where N is the number of arguments.
 * Limited to a maximum 3 arguments.
 * Generates O(N^2) classes where N is the number of argument types (-O2).
+* For class hiearchies, the visitor pattern must be used to add arguments.
 
 And the following advantages:
 * Simple, header only (<250 lines).
 * Macro free.
-* Does not require a class hierarchy.
+* Does not require a class hierarchy. Methods can be dispatched on primitive types.
 
 ## Example
 
@@ -39,8 +40,9 @@ DumpArgs dumpArgs;
 auto method = multi::method<int,double>(dumpArgs);
 
 // Add arguments
-method.addArg(0.1);
-method.addArg(200);
+method.visit(0.1);
+method.visit(200);
+method.visit(0.2);
 
 // Call method
 method.apply();
