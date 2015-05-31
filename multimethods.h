@@ -29,136 +29,147 @@
 
 namespace multi {
 
-// Builder is a container template that holds all the possible types
+// PossibleTypes is a container template that holds all the possible types
 // of multimethod arguments
-// TImpl - Class containing method implementation
 // TArgs - Possible types
-template <typename TImpl, typename... TArgs>
-struct Builder
+template <typename... TArgs>
+struct PossibleTypes
 {
+    //--------------------------------------------------------------------------
+
+    // Visitor interface
     // Create an interface based on the given parameter pack
-    template <typename... Ts> struct ArgList
+    template <typename... Ts> struct Visitor
     {
     };
 
     template <typename T>
-    struct ArgList<T>
+    struct Visitor<T>
     {
-        virtual ~ArgList() {}
-        virtual ArgList<TArgs...>* addArg(const T& v) = 0;
+        virtual ~Visitor() {}
+        virtual Visitor<TArgs...>* addArg(const T& v) = 0;
     };
 
     template <typename T, typename... Ts>
-    struct ArgList<T, Ts...> : public ArgList<Ts...>
+    struct Visitor<T, Ts...> : public Visitor<Ts...>
     {
         // Premote functions from the base classes
-        using ArgList<Ts...>::addArg;
-        virtual ArgList<TArgs...>* addArg(const T& v) = 0;
+        using Visitor<Ts...>::addArg;
+        virtual Visitor<TArgs...>* addArg(const T& v) = 0;
         virtual void apply() = 0;
     };
 
-    //-------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
 
-    template <typename... Ts>
-    struct ArgStart :
-            public ArgList<TArgs...>,
-            public TImpl
+    // Implementation is a container template that holds the implementation
+    // class
+    template <typename TImpl>
+    struct Implementation
     {
-        ArgStart(const TImpl& impl) : TImpl(impl) {}
-    };
+        //------------------------------------------------------------------
 
-    template <typename T, typename... Ts>
-    struct ArgStart<T, Ts...> : public ArgStart<Ts...>
-    {
-        ArgStart(const TImpl& impl) : ArgStart<Ts...>(impl) {}
-
-        using ArgStart<Ts...>::addArg;
-        virtual ArgList<TArgs...>* addArg(const T& v);
-        virtual void apply(){}
-    };
-
-    //-------------------------------------------------------------------------
-
-    template <typename T0, typename... Ts>
-    struct Arg0 : public ArgStart<>
-    {
-        T0 arg0_;
-        Arg0(const ArgStart<>& argStart, const T0& v) :
-            ArgStart<>(argStart),
-            arg0_(v) {}
-    };
-
-    template <typename T0, typename T, typename... Ts>
-    struct Arg0<T0, T, Ts...> : public Arg0<T0,Ts...>
-    {
-        Arg0<T0,T,Ts...>(const ArgStart<>& argStart, const T0& v) :
-            Arg0<T0,Ts...>(argStart,v) {}
-
-        using Arg0<T0,Ts...>::addArg;
-        virtual ArgList<TArgs...>* addArg(const T& v);
-        void apply()
+        template <typename... Ts>
+        struct ArgStart :
+                public Visitor<TArgs...>,
+                public TImpl
         {
-            TImpl::apply(Arg0<T0>::arg0_);
-        }
-    };
+            ArgStart(const TImpl& impl) : TImpl(impl) {}
+        };
 
-    //-------------------------------------------------------------------------
-
-    template <typename T0, typename T1, typename... Ts>
-    struct Arg1 : public Arg0<T0>
-    {
-        T1 arg1_;
-        Arg1(const Arg0<T0>& arg0, const T1& v) :
-            Arg0<T0>(arg0),
-            arg1_(v) {}
-    };
-
-    template <typename T0, typename T1, typename T, typename... Ts>
-    struct Arg1<T0, T1, T, Ts...> : public Arg1<T0,T1,Ts...>
-    {
-        Arg1<T0,T1,T,Ts...>(const Arg0<T0>& arg0, const T1& v) :
-            Arg1<T0,T1,Ts...>(arg0,v) {}
-
-        using Arg1<T0,T1,Ts...>::addArg;
-        virtual ArgList<TArgs...>* addArg(const T& v);
-        virtual void apply()
+        template <typename T, typename... Ts>
+        struct ArgStart<T, Ts...> : public ArgStart<Ts...>
         {
-            TImpl::apply(Arg0<T0>::arg0_, Arg1<T0,T1>::arg1_);
-        }
-    };
+            ArgStart(const TImpl& impl) : ArgStart<Ts...>(impl) {}
 
-    //-------------------------------------------------------------------------
+            using ArgStart<Ts...>::addArg;
+            virtual Visitor<TArgs...>* addArg(const T& v);
+            virtual void apply(){}
+        };
 
-    template <typename T0, typename T1, typename T2, typename... Ts>
-    struct Arg2 : public Arg1<T0,T1>
-    {
-        T2 arg2_;
-        Arg2(const Arg1<T0,T1>& arg1, const T2& v) :
-            Arg1<T0,T1>(arg1),
-            arg2_(v) {}
-    };
+        //-------------------------------------------------------------------
 
-    template <typename T0, typename T1, typename T2, typename T, typename... Ts>
-    struct Arg2<T0, T1, T2, T, Ts...> : public Arg2<T0,T1,T2,Ts...>
-    {
-        Arg2<T0,T1,T2,T,Ts...>(const Arg1<T0,T1>& arg1, const T2& v) :
-            Arg2<T0,T1,T2,Ts...>(arg1,v) {}
-        using Arg2<T0,T1,T2,Ts...>::addArg;
-        virtual ArgList<TArgs...>* addArg(const T& v) { return this; }
-        virtual void apply()
+        template <typename T0, typename... Ts>
+        struct Arg0 : public ArgStart<>
         {
-            TImpl::apply(Arg0<T0>::arg0_,
-                         Arg1<T0,T1>::arg1_,
-                         Arg2<T0,T1,T2>::arg2_);
-        }
-    };
+            T0 arg0_;
+            Arg0(const ArgStart<>& argStart, const T0& v) :
+                ArgStart<>(argStart),
+                arg0_(v) {}
+        };
 
-    //------------------------------------------------------------------------------
+        template <typename T0, typename T, typename... Ts>
+        struct Arg0<T0, T, Ts...> : public Arg0<T0,Ts...>
+        {
+            Arg0<T0,T,Ts...>(const ArgStart<>& argStart, const T0& v) :
+                Arg0<T0,Ts...>(argStart,v) {}
+
+            using Arg0<T0,Ts...>::addArg;
+            virtual Visitor<TArgs...>* addArg(const T& v);
+            void apply()
+            {
+                TImpl::apply(Arg0<T0>::arg0_);
+            }
+        };
+
+        //--------------------------------------------------------------------
+
+        template <typename T0, typename T1, typename... Ts>
+        struct Arg1 : public Arg0<T0>
+        {
+            T1 arg1_;
+            Arg1(const Arg0<T0>& arg0, const T1& v) :
+                Arg0<T0>(arg0),
+                arg1_(v) {}
+        };
+
+        template <typename T0, typename T1, typename T, typename... Ts>
+        struct Arg1<T0, T1, T, Ts...> : public Arg1<T0,T1,Ts...>
+        {
+            Arg1<T0,T1,T,Ts...>(const Arg0<T0>& arg0, const T1& v) :
+                Arg1<T0,T1,Ts...>(arg0,v) {}
+
+            using Arg1<T0,T1,Ts...>::addArg;
+            virtual Visitor<TArgs...>* addArg(const T& v);
+            virtual void apply()
+            {
+                TImpl::apply(Arg0<T0>::arg0_, Arg1<T0,T1>::arg1_);
+            }
+        };
+
+        //---------------------------------------------------------------------
+
+        template <typename T0, typename T1, typename T2, typename... Ts>
+        struct Arg2 : public Arg1<T0,T1>
+        {
+            T2 arg2_;
+            Arg2(const Arg1<T0,T1>& arg1, const T2& v) :
+                Arg1<T0,T1>(arg1),
+                arg2_(v) {}
+        };
+
+        template <typename T0, typename T1, typename T2, typename T, typename... Ts>
+        struct Arg2<T0, T1, T2, T, Ts...> : public Arg2<T0,T1,T2,Ts...>
+        {
+            Arg2<T0,T1,T2,T,Ts...>(const Arg1<T0,T1>& arg1, const T2& v) :
+                Arg2<T0,T1,T2,Ts...>(arg1,v) {}
+            using Arg2<T0,T1,T2,Ts...>::addArg;
+            virtual Visitor<TArgs...>* addArg(const T& v) { return this; }
+            virtual void apply()
+            {
+                TImpl::apply(Arg0<T0>::arg0_,
+                             Arg1<T0,T1>::arg1_,
+                             Arg2<T0,T1,T2>::arg2_);
+            }
+        };
+
+    }; // Implementation
+
+    //--------------------------------------------------------------------------
 
     template <typename TState>
     struct Args
     {
-        Args(TState& state, ArgList<TArgs...>* args) :
+        Args(TState& state, Visitor<TArgs...>* args) :
             state_(state),
             args_(args) {}
 
@@ -166,44 +177,47 @@ struct Builder
         void addArg(const T& v)
         {
             // The real type of args_ changes each time an argument is added
-            args_ =  std::unique_ptr<ArgList<TArgs...>>(args_->addArg(v));
+            args_ =  std::unique_ptr<Visitor<TArgs...>>(args_->addArg(v));
         }
 
         void apply()
         {
             args_->apply();
-            // TODO: clean this up - it should be a static_cast
+            // TODO: this would be cleaner as a static_cast
             state_ = TState(dynamic_cast<TState&>(*args_));
         }
     private:
         TState& state_;
-        std::unique_ptr<ArgList<TArgs...>> args_;
+        std::unique_ptr<Visitor<TArgs...>> args_;
     };
 
-}; // Builder
+}; // PossibleTypes
 
 //----- Template method implementations ----------------------------------------
 
-template <typename TImpl, typename... TArgs>
+template <typename... TArgs>
+template <typename TImpl>
 template <typename T, typename... Ts>
-Builder<TImpl,TArgs...>::ArgList<TArgs...>*
-Builder<TImpl,TArgs...>::ArgStart<T,Ts...>::addArg(const T& v)
+PossibleTypes<TArgs...>::Visitor<TArgs...>*
+PossibleTypes<TArgs...>::Implementation<TImpl>::ArgStart<T,Ts...>::addArg(const T& v)
 {
     return new Arg0<T,TArgs...>(*this,v);
 }
 
-template <typename TImpl, typename... TArgs>
+template <typename... TArgs>
+template <typename TImpl>
 template <typename T0, typename T, typename... Ts>
-Builder<TImpl,TArgs...>::ArgList<TArgs...>*
-Builder<TImpl,TArgs...>::Arg0<T0,T,Ts...>::addArg(const T& v)
+PossibleTypes<TArgs...>::Visitor<TArgs...>*
+PossibleTypes<TArgs...>::Implementation<TImpl>::Arg0<T0,T,Ts...>::addArg(const T& v)
 {
     return new Arg1<T0,T,TArgs...>(*this,v);
 }
 
-template <typename TImpl, typename... TArgs>
+template <typename... TArgs>
+template <typename TImpl>
 template <typename T0, typename T1, typename T, typename... Ts>
-Builder<TImpl,TArgs...>::ArgList<TArgs...>*
-Builder<TImpl,TArgs...>::Arg1<T0,T1,T,Ts...>::addArg(const T& v)
+PossibleTypes<TArgs...>::Visitor<TArgs...>*
+PossibleTypes<TArgs...>::Implementation<TImpl>::Arg1<T0,T1,T,Ts...>::addArg(const T& v)
 {
     return new Arg2<T0,T1,T,TArgs...>(*this,v);
 }
@@ -239,11 +253,12 @@ struct Mixin : public TImpl, public Base
 //----- Create a multimethod ---------------------------------------------------
 
 template <typename... TArgs, typename TImpl>
-typename Builder<Mixin<TImpl>,TArgs...>::template Args<TImpl> method(TImpl& impl)
+PossibleTypes<TArgs...>::Args<TImpl> method(TImpl& impl)
 {
     Mixin<TImpl> wrappedImpl(impl);
-    auto* emptyArgs = new typename Builder<Mixin<TImpl>,TArgs...>::template ArgStart<TArgs...>(wrappedImpl);
-    return typename Builder<Mixin<TImpl>,TArgs...>::template Args<TImpl>(impl,emptyArgs);
+    auto* emptyArgs =  new typename PossibleTypes<TArgs...>::
+            template Implementation<Mixin<TImpl>>:: template ArgStart<TArgs...>(wrappedImpl);
+    return typename PossibleTypes<TArgs...>::template Args<TImpl>(impl,emptyArgs);
 }
 
 } // namespace multi
