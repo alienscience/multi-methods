@@ -26,6 +26,7 @@
 **/
 
 #include <memory>
+#include <cassert>
 
 namespace multi {
 
@@ -261,13 +262,13 @@ struct Base
     virtual ~Base() {}
 
     template <typename T0>
-    void apply(const T0& arg0) {}
+    void apply(const T0& arg0) { assert(false); }
 
     template <typename T0, typename T1>
-    void apply(const T0& arg0, const T1& arg1) {}
+    void apply(const T0& arg0, const T1& arg1) { assert(false); }
 
     template <typename T0, typename T1, typename T2>
-    void apply(const T0& arg0, const T1& arg1, const T2& arg2) {}
+    void apply(const T0& arg0, const T1& arg1, const T2& arg2) { assert(false); }
 
 };
 
